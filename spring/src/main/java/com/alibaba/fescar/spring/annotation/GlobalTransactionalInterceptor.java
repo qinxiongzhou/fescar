@@ -19,6 +19,7 @@ package com.alibaba.fescar.spring.annotation;
 import java.lang.reflect.Method;
 
 import com.alibaba.fescar.common.exception.ShouldNeverHappenException;
+import com.alibaba.fescar.common.util.StringUtils;
 import com.alibaba.fescar.tm.api.DefaultFailureHandlerImpl;
 import com.alibaba.fescar.tm.api.FailureHandler;
 import com.alibaba.fescar.tm.api.TransactionalExecutor;
@@ -61,8 +62,9 @@ public class GlobalTransactionalInterceptor implements MethodInterceptor {
 
                     @Override
                     public String name() {
-                        if (anno.name() != null) {
-                            return anno.name();
+                        String name = anno.name();
+                        if (!StringUtils.isEmpty(name)) {
+                            return name;
                         }
                         return formatMethod(methodInvocation.getMethod());
                     }
@@ -107,8 +109,8 @@ public class GlobalTransactionalInterceptor implements MethodInterceptor {
         sb.append("(");
 
         int paramPos = 0;
-        for (Class<?> claz : params) {
-            sb.append(claz.getName());
+        for (Class<?> clazz : params) {
+            sb.append(clazz.getName());
             if (++paramPos < params.length) {
                 sb.append(",");
             }
