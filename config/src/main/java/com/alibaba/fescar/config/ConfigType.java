@@ -16,16 +16,11 @@
 
 package com.alibaba.fescar.config;
 
-import com.alibaba.fescar.common.exception.NotSupportYetException;
-
 /**
  * The enum Config type.
  *
- * @Author: jimin.jm @alibaba-inc.com
- * @Project: feats -all
- * @DateTime: 2019 /2/1 3:57 PM
- * @FileName: ConfigType
- * @Description:
+ * @author jimin.jm @alibaba-inc.com
+ * @date 2019 /2/1
  */
 public enum ConfigType {
     /**
@@ -33,9 +28,17 @@ public enum ConfigType {
      */
     File,
     /**
+     * zookeeper config type.
+     */
+    ZK,
+    /**
      * Nacos config type.
      */
-    Nacos;
+    Nacos,
+    /**
+     * Apollo config type.
+     */
+    Apollo;
 
     /**
      * Gets type.
@@ -44,12 +47,11 @@ public enum ConfigType {
      * @return the type
      */
     public static ConfigType getType(String name) {
-        if (File.name().equalsIgnoreCase(name)) {
-            return File;
-        } else if (Nacos.name().equalsIgnoreCase(name)) {
-            return Nacos;
-        } else {
-            throw new NotSupportYetException("unsupport type:" + name);
+        for (ConfigType configType : values()) {
+            if (configType.name().equalsIgnoreCase(name)) {
+                return configType;
+            }
         }
+        throw new IllegalArgumentException("illegal type:" + name);
     }
 }

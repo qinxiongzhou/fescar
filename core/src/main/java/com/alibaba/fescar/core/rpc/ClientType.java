@@ -18,6 +18,8 @@ package com.alibaba.fescar.core.rpc;
 
 /**
  * The enum Client type.
+ *
+ * @author jimin.jm @alibaba-inc.com
  */
 public enum ClientType {
 
@@ -40,7 +42,7 @@ public enum ClientType {
      * @return the client type
      */
     public static ClientType get(byte ordinal) {
-        return get((int) ordinal);
+        return get((int)ordinal);
     }
 
     /**

@@ -24,11 +24,8 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 /**
  * The type Netty server config.
  *
- * @Author: jimin.jm @alibaba-inc.com
- * @Project: fescar -all
- * @DateTime: 2018 /9/12 11:35
- * @FileName: NettyServerConfig
- * @Description:
+ * @author jimin.jm @alibaba-inc.com
+ * @date 2018 /9/12
  */
 public class NettyServerConfig extends NettyBaseConfig {
 
@@ -48,6 +45,12 @@ public class NettyServerConfig extends NettyBaseConfig {
     private static final String NIO_WORKER_THREAD_PREFIX = "NettyServerNIOWorker";
     private static final String DEFAULT_EXECUTOR_THREAD_PREFIX = "NettyServerBizHandler";
     private static final int DEFAULT_BOSS_THREAD_SIZE = 1;
+
+    /**
+     * Shutdown timeout default 1s
+     */
+    private static final int DEFAULT_SHUTDOWN_TIMEOUT_SEC = 1;
+
     /**
      * The Server channel clazz.
      */
@@ -299,4 +302,12 @@ public class NettyServerConfig extends NettyBaseConfig {
         return CONFIG.getInt("transport.thread-factory.boss-thread-size", DEFAULT_BOSS_THREAD_SIZE);
     }
 
+    /**
+     * Get the timeout seconds of shutdown.
+     *
+     * @return the int
+     */
+    public int getServerShutdownWaitTime() {
+        return CONFIG.getInt("transport.shutdown.wait", DEFAULT_SHUTDOWN_TIMEOUT_SEC);
+    }
 }

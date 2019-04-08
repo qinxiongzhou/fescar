@@ -26,6 +26,8 @@ import com.alibaba.fescar.common.exception.ShouldNeverHappenException;
 
 /**
  * The type Blob utils.
+ *
+ * @author jimin.jm @alibaba-inc.com
  */
 public class BlobUtils {
 
@@ -63,7 +65,7 @@ public class BlobUtils {
         }
 
         try {
-            return new String(blob.getBytes((long) 1, (int) blob.length()));
+            return new String(blob.getBytes((long)1, (int)blob.length()));
         } catch (Exception e) {
             throw new ShouldNeverHappenException(e);
         }

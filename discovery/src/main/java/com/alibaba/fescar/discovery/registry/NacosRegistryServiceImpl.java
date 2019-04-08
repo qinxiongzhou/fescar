@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.alibaba.fescar.config.Configuration;
 import com.alibaba.fescar.config.ConfigurationFactory;
+import com.alibaba.fescar.config.ConfigurationKeys;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.listener.Event;
@@ -36,20 +37,14 @@ import com.alibaba.nacos.client.naming.utils.CollectionUtils;
 /**
  * The type Nacos registry service.
  *
- * @Author: jimin.jm @alibaba-inc.com
- * @Project: fescar -all
- * @DateTime: 2019 /1/31 5:22 PM
- * @FileName: NacosRegistryServiceImpl
- * @Description:
+ * @author jimin.jm @alibaba-inc.com
+ * @date 2019 /1/31
  */
 public class NacosRegistryServiceImpl implements RegistryService<EventListener> {
-
     private static final String DEFAULT_NAMESPACE = "public";
     private static final String DEFAULT_CLUSTER = "default";
     private static final String PRO_SERVER_ADDR_KEY = "serverAddr";
     private static final String PRO_NAMESPACE_KEY = "namespace";
-    private static final String FILE_ROOT_REGISTRY = "registry";
-    private static final String FILE_CONFIG_SPLIT_CHAR = ".";
     private static final String REGISTRY_TYPE = "nacos";
     private static final String REGISTRY_CLUSTER = "cluster";
     private static final Configuration FILE_CONFIG = ConfigurationFactory.FILE_INSTANCE;
@@ -58,7 +53,8 @@ public class NacosRegistryServiceImpl implements RegistryService<EventListener> 
     private static final ConcurrentMap<String, List<InetSocketAddress>> CLUSTER_ADDRESS_MAP = new ConcurrentHashMap<>();
     private static volatile NacosRegistryServiceImpl instance;
 
-    private NacosRegistryServiceImpl() {}
+    private NacosRegistryServiceImpl() {
+    }
 
     /**
      * Gets instance.
@@ -79,15 +75,13 @@ public class NacosRegistryServiceImpl implements RegistryService<EventListener> 
     @Override
     public void register(InetSocketAddress address) throws Exception {
         validAddress(address);
-        getNamingInstance().registerInstance(PRO_SERVER_ADDR_KEY, address.getHostName(), address.getPort(),
-            getClusterName());
+        getNamingInstance().registerInstance(PRO_SERVER_ADDR_KEY, address.getAddress().getHostAddress(), address.getPort(), getClusterName());
     }
 
     @Override
     public void unregister(InetSocketAddress address) throws Exception {
         validAddress(address);
-        getNamingInstance().deregisterInstance(PRO_SERVER_ADDR_KEY, address.getHostName(), address.getPort(),
-            getClusterName());
+        getNamingInstance().deregisterInstance(PRO_SERVER_ADDR_KEY, address.getAddress().getHostAddress(), address.getPort(), getClusterName());
     }
 
     @Override
@@ -139,7 +133,7 @@ public class NacosRegistryServiceImpl implements RegistryService<EventListener> 
             subscribe(clusterName, new EventListener() {
                 @Override
                 public void onEvent(Event event) {
-                    List<Instance> instances = ((NamingEvent)event).getInstances();
+                    List<Instance> instances = ((NamingEvent) event).getInstances();
                     if (null == instances && null != CLUSTER_ADDRESS_MAP.get(clusterName)) {
                         CLUSTER_ADDRESS_MAP.remove(clusterName);
                     } else if (!CollectionUtils.isEmpty(instances)) {
@@ -211,17 +205,20 @@ public class NacosRegistryServiceImpl implements RegistryService<EventListener> 
     }
 
     private static String getNacosAddrFileKey() {
-        return FILE_ROOT_REGISTRY + FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE + FILE_CONFIG_SPLIT_CHAR
+        return ConfigurationKeys.FILE_ROOT_REGISTRY + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE
+            + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR
             + PRO_SERVER_ADDR_KEY;
     }
 
     private static String getNacosNameSpaceFileKey() {
-        return FILE_ROOT_REGISTRY + FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE + FILE_CONFIG_SPLIT_CHAR
+        return ConfigurationKeys.FILE_ROOT_REGISTRY + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE
+            + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR
             + PRO_NAMESPACE_KEY;
     }
 
     private static String getNacosClusterFileKey() {
-        return FILE_ROOT_REGISTRY + FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE + FILE_CONFIG_SPLIT_CHAR
+        return ConfigurationKeys.FILE_ROOT_REGISTRY + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR + REGISTRY_TYPE
+            + ConfigurationKeys.FILE_CONFIG_SPLIT_CHAR
             + REGISTRY_CLUSTER;
     }
 }

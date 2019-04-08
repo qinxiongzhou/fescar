@@ -14,17 +14,28 @@
  *  limitations under the License.
  */
 
-package com.alibaba.fescar.core.service;
+package com.alibaba.fescar.rm.datasource.undo;
 
 /**
- * Watch for server address list change
+ * The interface Keyword checker.
+ *
+ * @author Wu
+ * @date 2019 /3/5 The interface Keyword checker
  */
-public interface AddressWatcher {
+public interface KeywordChecker {
+    /**
+     * check whether given field name and table name use keywords
+     *
+     * @param fieldOrTableName the field or table name
+     * @return boolean
+     */
+    boolean check(String fieldOrTableName);
 
     /**
-     * On change.
+     * check whether given field name and table name use keywords and,if so,will add "`" to the name.
      *
-     * @param serverAddressArray the server address array
+     * @param fieldOrTableName the field or table name
+     * @return string
      */
-    void onChange(String[] serverAddressArray);
+    String checkAndReplace(String fieldOrTableName);
 }

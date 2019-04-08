@@ -16,6 +16,14 @@
 
 package com.alibaba.fescar.common.loader;
 
+import com.alibaba.fescar.common.executor.Initialize;
+import com.alibaba.fescar.common.util.CollectionUtils;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,20 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * The type Enhanced service loader.
  *
- * @Author: jimin.jm @alibaba-inc.com
- * @Project: fescar -all
- * @DateTime: 2018 /10/10 14:28
- * @FileName: EnhancedServiceLoader
- * @Description:
+ * @author jimin.jm @alibaba-inc.com
+ * @date 2018 /10/10
  */
 public class EnhancedServiceLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedServiceLoader.class);
@@ -56,7 +55,7 @@ public class EnhancedServiceLoader {
      * @param <S>     the type parameter
      * @param service the service
      * @param loader  the loader
-     * @return s
+     * @return s s
      * @throws EnhancedServiceNotFoundException the enhanced service not found exception
      */
     public static <S> S load(Class<S> service, ClassLoader loader) throws EnhancedServiceNotFoundException {
@@ -68,7 +67,7 @@ public class EnhancedServiceLoader {
      *
      * @param <S>     the type parameter
      * @param service the service
-     * @return s
+     * @return s s
      * @throws EnhancedServiceNotFoundException the enhanced service not found exception
      */
     public static <S> S load(Class<S> service) throws EnhancedServiceNotFoundException {
@@ -81,7 +80,7 @@ public class EnhancedServiceLoader {
      * @param <S>          the type parameter
      * @param service      the service
      * @param activateName the activate name
-     * @return s
+     * @return s s
      * @throws EnhancedServiceNotFoundException the enhanced service not found exception
      */
     public static <S> S load(Class<S> service, String activateName) throws EnhancedServiceNotFoundException {
@@ -95,11 +94,35 @@ public class EnhancedServiceLoader {
      * @param service      the service
      * @param activateName the activate name
      * @param loader       the loader
-     * @return s
+     * @return s s
      * @throws EnhancedServiceNotFoundException the enhanced service not found exception
      */
-    public static <S> S load(Class<S> service, String activateName, ClassLoader loader) throws EnhancedServiceNotFoundException {
+    public static <S> S load(Class<S> service, String activateName, ClassLoader loader)
+        throws EnhancedServiceNotFoundException {
         return loadFile(service, activateName, loader);
+    }
+
+    /**
+     * get all implements
+     *
+     * @param <S>     the type parameter
+     * @param service the service
+     * @return list
+     */
+    public static <S> List<S> loadAll(Class<S> service){
+        List<S> allInstances = new ArrayList<>();
+        List<Class> allClazzs = getAllExtensionClass(service);
+        if(CollectionUtils.isEmpty(allClazzs)){
+            return allInstances;
+        }
+        try {
+            for(Class clazz : allClazzs){
+                allInstances.add(initInstance(service, clazz));
+            }
+        } catch (Throwable t) {
+            throw new EnhancedServiceNotFoundException(t);
+        }
+        return allInstances;
     }
 
     /**
@@ -151,7 +174,7 @@ public class EnhancedServiceLoader {
                 for (int i = 0; i < extensions.size(); i++) {
                     Class clz = extensions.get(i);
                     @SuppressWarnings("unchecked")
-                    LoadLevel activate = (LoadLevel) clz.getAnnotation(LoadLevel.class);
+                    LoadLevel activate = (LoadLevel)clz.getAnnotation(LoadLevel.class);
                     if (activate != null && activateName.equals(activate.name())) {
                         activateExtensions.add(clz);
                     }
@@ -161,11 +184,12 @@ public class EnhancedServiceLoader {
             }
 
             if (extensions.isEmpty()) {
-                throw new EnhancedServiceNotFoundException("not found service provider for : " + service.getName() + "[" + activateName
-                    + "] and classloader : " + ObjectUtils.toString(loader));
+                throw new EnhancedServiceNotFoundException(
+                    "not found service provider for : " + service.getName() + "[" + activateName
+                        + "] and classloader : " + ObjectUtils.toString(loader));
             }
             Class<?> extension = extensions.get(extensions.size() - 1);// 最大的一个
-            S result = service.cast(extension.newInstance());
+            S result = initInstance(service, extension);
             if (!foundFromCache && LOGGER.isInfoEnabled()) {
                 LOGGER.info("load " + service.getSimpleName() + "[" + activateName + "] extension by class[" + extension.getName() + "]");
             }
@@ -193,17 +217,15 @@ public class EnhancedServiceLoader {
         if (extensions.isEmpty()) {
             return extensions;
         }
-
-        // 做一下排序
         Collections.sort(extensions, new Comparator<Class>() {
             @Override
             public int compare(Class c1, Class c2) {
                 Integer o1 = 0;
                 Integer o2 = 0;
                 @SuppressWarnings("unchecked")
-                LoadLevel a1 = (LoadLevel) c1.getAnnotation(LoadLevel.class);
+                LoadLevel a1 = (LoadLevel)c1.getAnnotation(LoadLevel.class);
                 @SuppressWarnings("unchecked")
-                LoadLevel a2 = (LoadLevel) c2.getAnnotation(LoadLevel.class);
+                LoadLevel a2 = (LoadLevel)c2.getAnnotation(LoadLevel.class);
 
                 if (a1 != null) {
                     o1 = a1.order();
@@ -222,7 +244,8 @@ public class EnhancedServiceLoader {
     }
 
     @SuppressWarnings("rawtypes")
-    private static void loadFile(Class<?> service, String dir, ClassLoader classLoader, List<Class> extensions) throws IOException {
+    private static void loadFile(Class<?> service, String dir, ClassLoader classLoader, List<Class> extensions)
+        throws IOException {
         String fileName = dir + service.getName();
         Enumeration<URL> urls;
         if (classLoader != null) {
@@ -249,20 +272,36 @@ public class EnhancedServiceLoader {
                         }
                     }
                 } catch (ClassNotFoundException e) {
-                    // ignore
                 } catch (Throwable e) {
-                    LOGGER.warn(e.getMessage()); // 记录一下失败日志
+                    LOGGER.warn(e.getMessage());
                 } finally {
                     try {
                         if (reader != null) {
                             reader.close();
                         }
                     } catch (IOException ioe) {
-                        // ignore
                     }
                 }
             }
         }
+    }
+
+    /**
+     * init instance
+     *
+     * @param <S>       the type parameter
+     * @param service   the service
+     * @param implClazz the impl clazz
+     * @return s
+     * @throws IllegalAccessException the illegal access exception
+     * @throws InstantiationException the instantiation exception
+     */
+    protected static <S> S initInstance(Class<S> service, Class implClazz) throws IllegalAccessException, InstantiationException {
+        S s = service.cast(implClazz.newInstance());
+        if(s instanceof Initialize){
+            ((Initialize)s).init();
+        }
+        return s;
     }
 
     private static ClassLoader findClassLoader() {
